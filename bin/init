@@ -1,0 +1,64 @@
+#!/bin/sh
+set -euo pipefail
+
+printf "新しいリポジトリ名を入力してください: "
+read -r new_name
+if [ -z "${new_name}" ]; then
+  printf "リポジトリ名を入力してください。中断します。\n"
+  exit 1
+fi
+
+current_dir=$(pwd)
+parent_dir=$(dirname "${current_dir}")
+current_name=$(basename "${current_dir}")
+target_dir=${current_dir}
+rename_needed=false
+
+if [ "${new_name}" != "${current_name}" ]; then
+  target_dir=${parent_dir}/${new_name}
+  if [ -e "${target_dir}" ]; then
+    printf "ディレクトリ '%s' は既に存在します。別の名前を指定してください。\n" "${target_dir}"
+    exit 1
+  fi
+  rename_needed=true
+fi
+
+printf "これから '%s' を新リポジトリとして初期化し、既存履歴を上書きします。後悔しませんね？ (y/N): " "${target_dir}"
+read -r confirm
+case "${confirm:-n}" in
+  [yY]) ;;
+  *)
+    printf "処理を中止しました。\n"
+    exit 1
+    ;;
+esac
+
+if [ "${rename_needed}" = "true" ]; then
+  cd "${parent_dir}"
+  mv "${current_name}" "${new_name}"
+  printf "ディレクトリ名を '%s' に変更しました。\n" "${new_name}"
+fi
+
+cd "${target_dir}"
+printf "作業ディレクトリを '%s' に切り替えました。\n" "${target_dir}"
+
+if ! command -v git >/dev/null 2>&1; then
+  printf "git コマンドが見つかりません。インストールしてから再実行してください。\n"
+  exit 1
+fi
+
+if [ -d .git ]; then
+  rm -rf .git
+  printf "旧 .git を削除しました。\n"
+fi
+
+git init
+printf "新しい git リポジトリを初期化しました。\n"
+
+git add .
+printf "ファイルをステージしました。\n"
+
+git commit -m "Initial commit"
+printf "初回コミットを記録しました。\n"
+
+printf "完了しました。README などを見直してください。\n"
