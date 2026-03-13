@@ -1,16 +1,18 @@
 # TODO
 
 <!--[RULES]
-- TODO ファイルにはタスクのストックを載せ、状態と優先度を随時更新します。1行1タスクで簡潔に書き、必要なら詳細は SPEC や CHECKPOINT でつなげてください。
-- ステータスは `pending`/`in_progress`/`blocked`/`done` などで表現し、優先度（high/medium/low）を併記してください。
-- 日付・担当・補足メモは角括弧で囲んだメタ情報として最後に追記します。
+- TODO ファイルにはタスクのストックを載せ、状態などを随時更新します。1行1タスクで簡潔に書き、必要なら詳細は SPEC や CHECKPOINT でつなげてください。
+- ステータスは `NOT STARTED`/`IN_PROGRESS`/`BLOCKED`/`DONE` などで表現してください。
+- Assigneeは「人間かAIか」をベースにしつつ、進捗に応じて適切にスイッチしてください
 
 [FORMAT]
 
-1. [pending/high] Task description …（フォーカスすべき理由、人や依存、想定完了日など）
-2. [in_progress/medium] 次の作業 …（次回のアクションと現状の課題）
-3. [blocked/low] 資料待ち …（ブロッカーとなっているものと連絡先）
+| # | Task | Costs | Status | Assignee | Note | Task Note |
+|---|--------|------|------|--------|---|
+| Task ID | Task Description | 3h | (DONE / IN_PROGRESS / NOT STARTED / BLOCKED) | (YOU / AI Agent) | Progress Note | The link to Task Note |
+
 
 ## Notes
 
 - （タスク間の関連や整理ルール・期限の目安などがあれば追記）
+-->
