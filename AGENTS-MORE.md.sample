@@ -44,3 +44,19 @@ bin/init
 - すべてのドキュメントは日本語で記述します。
 - `attachments/` はAIへの参照ファイルの置き場所、`outputs/` は生成物の出力先です。
 - タスクチケットを作成する際は `docs/task-tickets/0_TASK-TICKET.md` のCommander's Intent形式に従います。
+
+## 会話ログの自動記録
+
+各会話のターンが終わるたびに、`outputs/AI-CONVERSATION-LOG.md` にそのやり取りをそのまま追記すること。要約や整形は不要。ユーザーからの指示を待たず、自律的に記録すること。
+
+### フォーマット
+
+```markdown
+## YYYY-MM-DD HH:MM
+
+**User:** <ユーザーの発言をそのまま>
+
+**AI:** <自分の返答をそのまま>
+
+---
+```
