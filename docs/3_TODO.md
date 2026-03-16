@@ -9,7 +9,7 @@
 
 | # | Task | Costs | Status | Assignee | Note | Task Note |
 |---|--------|------|------|--------|---|
-| Task ID | Task Description | 3h | (DONE / IN_PROGRESS / NOT STARTED / BLOCKED) | (YOU / AI Agent) | Progress Note | The link to Task Note |
+| Task ID | Task Description | 3h | (DONE / IN_PROGRESS / NOT STARTED / BLOCKED) | (YOU / AI Agent / Member Name) | Progress Note | The link to Task Note |
 
 
 ## Notes
