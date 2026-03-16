@@ -14,8 +14,6 @@
 
 - How much time we want to spend and how that constrains the solution
 
----
-
 ## 3. Solution（解決のざっくりした形）
 
 - The core elements we came up with, presented in a form that’s easy for people to immediately understand
@@ -30,7 +28,7 @@
 
 ---
 
-### Notes（補足）
+## Notes（補足）
 
 - （その他、賭ける側・作る側が知っておくとよい情報）
 
