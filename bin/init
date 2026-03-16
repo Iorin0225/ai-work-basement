@@ -62,3 +62,12 @@ git commit -m "Initial commit"
 printf "初回コミットを記録しました。\n"
 
 printf "完了しました。README などを見直してください。\n"
+
+printf "\n"
+printf "=== AI への初期指示書を作成しましょう ===\n"
+printf "AGENTS.md.sample を参考に、プロジェクト用の AI 指示書を作成してください。\n"
+printf "使用する AI ツールに合わせてファイル名を指定しましょう:\n"
+printf "【例】\n"
+printf "  Claude Code      → CLAUDE.md\n"
+printf "  Others           → AGENTS.md\n"
+printf "\n"
