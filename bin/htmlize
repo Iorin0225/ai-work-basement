@@ -1,0 +1,418 @@
+#!/bin/bash
+
+# htmlize - MarkdownドキュメントをHTMLに変換してoutputs/html/に出力する
+
+set -e
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+OUTPUT_DIR="$REPO_ROOT/outputs/html"
+DOCS_DIR="$REPO_ROOT/docs"
+TICKETS_DIR="$REPO_ROOT/docs/task-tickets"
+
+mkdir -p "$OUTPUT_DIR"
+mkdir -p "$OUTPUT_DIR/task-tickets"
+
+# --- HTMLテンプレート ---
+
+html_header() {
+  local title="$1"
+  local prefix="${2:-}"
+  cat <<EOF
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f2f2f2;
+      color: #1a1a1a;
+      margin: 0;
+      padding: 0;
+      line-height: 1.75;
+    }
+
+    /* ナビゲーション */
+    nav {
+      background: #0095d9;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 3px 0 #006fa3;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.85em;
+      padding: 14px 16px;
+      border-radius: 4px 4px 0 0;
+      transition: background 0.15s;
+      letter-spacing: 0.03em;
+    }
+    nav a:hover { background: rgba(255,255,255,0.2); }
+    nav a:first-child { margin-right: 8px; font-size: 1em; letter-spacing: 0; }
+
+    /* メインコンテンツ */
+    .content {
+      max-width: 860px;
+      margin: 36px auto;
+      padding: 40px 48px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+
+    /* 見出し */
+    h1 {
+      font-size: 2em;
+      font-weight: 900;
+      color: #0095d9;
+      margin: 0 0 24px;
+      padding-bottom: 12px;
+      border-bottom: 4px solid #0095d9;
+      letter-spacing: -0.01em;
+    }
+    h2 {
+      font-size: 1.3em;
+      font-weight: 900;
+      background: #0095d9;
+      color: #fff;
+      margin: 2em 0 0.8em;
+      padding: 8px 16px;
+      border-radius: 6px;
+      letter-spacing: 0.02em;
+    }
+    h3 {
+      font-size: 1.05em;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin: 1.5em 0 0.5em;
+      padding-left: 10px;
+      border-left: 4px solid #0095d9;
+    }
+    h4 {
+      font-weight: 700;
+      margin: 1.2em 0 0.4em;
+    }
+
+    /* 段落・リスト */
+    p { margin: 0.6em 0 1em; }
+    ul, ol { padding-left: 1.5em; margin: 0.5em 0 1em; }
+    li { margin: 0.3em 0; }
+
+    /* テーブル */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1.2em 0;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    th {
+      background: #1a1a1a;
+      color: #fff;
+      padding: 10px 14px;
+      font-weight: 700;
+      font-size: 0.9em;
+      letter-spacing: 0.04em;
+    }
+    td {
+      padding: 9px 14px;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 0.95em;
+    }
+    tr:nth-child(even) td { background: #fafafa; }
+    tr:last-child td { border-bottom: none; }
+
+    /* コード */
+    code {
+      background: #e8f6ff;
+      color: #0077aa;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 0.88em;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+    }
+    pre {
+      background: #1a1a1a;
+      color: #f0f0f0;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 1em 0;
+    }
+    pre code { background: none; color: inherit; padding: 0; font-size: 0.9em; }
+
+    /* チェックボックス */
+    input[type="checkbox"] {
+      accent-color: #0095d9;
+      width: 16px;
+      height: 16px;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    /* 水平線 */
+    hr { border: none; border-top: 2px solid #e0e0e0; margin: 2em 0; }
+
+    /* テーブルのみカード風 */
+    .content > table {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="${prefix}index.html">TOP</a>
+  <a href="${prefix}1_PITCH.html">PITCH</a>
+  <a href="${prefix}2_PLAN.html">PLAN</a>
+  <a href="${prefix}3_TODO.html">TODO</a>
+  <a href="${prefix}4_CHECKPOINT.html">CHECKPOINT</a>
+</nav>
+<div class="content">
+EOF
+}
+
+html_footer() {
+  cat <<EOF
+</div>
+</body>
+</html>
+EOF
+}
+
+# --- Markdown → HTML 変換（簡易） ---
+
+md_to_html() {
+  local input="$1"
+  sed \
+    -e '/^<!--/,/^-->/d' \
+    "$input" | awk '
+  BEGIN { in_pre=0; in_table=0; in_ul=0; in_ol=0; table_row=0 }
+
+  # HTMLエスケープ（XSS対策: &を最初に処理すること）
+  function html_escape(s) {
+    gsub(/&/, "\\&amp;", s)
+    gsub(/</, "\\&lt;", s)
+    gsub(/>/, "\\&gt;", s)
+    gsub(/"/, "\\&quot;", s)
+    return s
+  }
+
+  # インライン装飾（エスケープ済みテキストに対して適用）
+  function inline(s,    result, rest, before, mid) {
+    result = ""
+    rest = s
+    # **bold**
+    while (match(rest, /\*\*[^*]+\*\*/)) {
+      before = substr(rest, 1, RSTART-1)
+      mid    = substr(rest, RSTART+2, RLENGTH-4)
+      result = result before "<strong>" mid "</strong>"
+      rest   = substr(rest, RSTART+RLENGTH)
+    }
+    rest = result rest; result = ""
+    # *em*
+    while (match(rest, /\*[^*]+\*/)) {
+      before = substr(rest, 1, RSTART-1)
+      mid    = substr(rest, RSTART+1, RLENGTH-2)
+      result = result before "<em>" mid "</em>"
+      rest   = substr(rest, RSTART+RLENGTH)
+    }
+    rest = result rest; result = ""
+    # `code`
+    while (match(rest, /`[^`]+`/)) {
+      before = substr(rest, 1, RSTART-1)
+      mid    = substr(rest, RSTART+1, RLENGTH-2)
+      result = result before "<code>" mid "</code>"
+      rest   = substr(rest, RSTART+RLENGTH)
+    }
+    return result rest
+  }
+
+  function close_ul() { if (in_ul) { print "</ul>"; in_ul=0 } }
+  function close_ol() { if (in_ol) { print "</ol>"; in_ol=0 } }
+  function close_list() { close_ul(); close_ol() }
+
+  # コードブロック
+  /^```/ {
+    if (in_pre) { print "</code></pre>"; in_pre=0 }
+    else { close_list(); print "<pre><code>"; in_pre=1 }
+    next
+  }
+  in_pre { print html_escape($0); next }
+
+  # 見出し
+  /^# /    { close_list(); print "<h1>" inline(html_escape(substr($0,3))) "</h1>"; next }
+  /^## /   { close_list(); print "<h2>" inline(html_escape(substr($0,4))) "</h2>"; next }
+  /^### /  { close_list(); print "<h3>" inline(html_escape(substr($0,5))) "</h3>"; next }
+  /^#### / { close_list(); print "<h4>" inline(html_escape(substr($0,6))) "</h4>"; next }
+
+  # 水平線
+  /^---$/ { close_list(); print "<hr>"; next }
+
+  # テーブル
+  /^\|/ {
+    if (!in_table) { print "<table>"; in_table=1; table_row=0 }
+    if (/^\|[-| :]+\|$/) { next }
+    gsub(/^\| */, ""); gsub(/ *\|$/, "")
+    n = split($0, cols, / *\| */)
+    table_row++
+    if (table_row == 1) {
+      printf "<tr>"
+      for (i=1; i<=n; i++) printf "<th>%s</th>", inline(html_escape(cols[i]))
+      print "</tr>"
+    } else {
+      printf "<tr>"
+      for (i=1; i<=n; i++) printf "<td>%s</td>", inline(html_escape(cols[i]))
+      print "</tr>"
+    }
+    next
+  }
+  in_table { print "</table>"; in_table=0; table_row=0 }
+
+  # チェックボックス（インデントあり）
+  /^  - \[ \]/ {
+    if (!in_ul) { print "<ul>"; in_ul=1 }
+    sub(/^  - \[ \] /, "")
+    print "<li style=\"margin-left:1.5em\"><input type=\"checkbox\" disabled> " inline(html_escape($0)) "</li>"
+    next
+  }
+  /^  - \[x\]/ {
+    if (!in_ul) { print "<ul>"; in_ul=1 }
+    sub(/^  - \[x\] /, "")
+    print "<li style=\"margin-left:1.5em\"><input type=\"checkbox\" checked disabled> " inline(html_escape($0)) "</li>"
+    next
+  }
+
+  # チェックボックス
+  /^- \[ \]/ {
+    if (!in_ul) { print "<ul>"; in_ul=1 }
+    sub(/^- \[ \] /, "")
+    print "<li><input type=\"checkbox\" disabled> " inline(html_escape($0)) "</li>"
+    next
+  }
+  /^- \[x\]/ {
+    if (!in_ul) { print "<ul>"; in_ul=1 }
+    sub(/^- \[x\] /, "")
+    print "<li><input type=\"checkbox\" checked disabled> " inline(html_escape($0)) "</li>"
+    next
+  }
+
+  # リスト（インデント付き）
+  /^  - / {
+    if (!in_ul) { print "<ul>"; in_ul=1 }
+    sub(/^  - /, "")
+    print "<li style=\"margin-left:1.5em\">" inline(html_escape($0)) "</li>"
+    next
+  }
+  /^- / {
+    if (!in_ul) { print "<ul>"; in_ul=1 }
+    sub(/^- /, "")
+    print "<li>" inline(html_escape($0)) "</li>"
+    next
+  }
+
+  # 番号付きリスト
+  /^[0-9]+\. / {
+    if (!in_ol) { close_ul(); print "<ol>"; in_ol=1 }
+    sub(/^[0-9]+\. /, "")
+    print "<li>" inline(html_escape($0)) "</li>"
+    next
+  }
+
+  # 空行
+  /^$/ { close_list(); print ""; next }
+
+  # 通常段落
+  {
+    close_list()
+    print "<p>" inline(html_escape($0)) "</p>"
+  }
+
+  END { close_list(); if (in_table) print "</table>"; if (in_pre) print "</code></pre>" }
+  '
+}
+
+# --- タイトル用HTMLエスケープ ---
+
+escape_html_attr() {
+  printf '%s' "$1" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g'
+}
+
+# --- 各ファイルを変換 ---
+
+convert() {
+  local src="$1"
+  local dest="$2"
+  local title="$3"
+
+  echo "  $src → $dest"
+  {
+    html_header "$title"
+    md_to_html "$src"
+    html_footer
+  } > "$dest"
+}
+
+echo "=== htmlize ==="
+
+convert "$DOCS_DIR/1_PITCH.md"      "$OUTPUT_DIR/1_PITCH.html"      "PITCH"
+convert "$DOCS_DIR/2_PLAN.md"       "$OUTPUT_DIR/2_PLAN.html"       "PLAN"
+convert "$DOCS_DIR/3_TODO.md"       "$OUTPUT_DIR/3_TODO.html"       "TODO"
+convert "$DOCS_DIR/4_CHECKPOINT.md" "$OUTPUT_DIR/4_CHECKPOINT.html" "CHECKPOINT"
+
+# タスクチケット
+for f in "$TICKETS_DIR"/T*.md; do
+  [ -f "$f" ] || continue
+  base="$(basename "$f" .md)"
+  title="$(escape_html_attr "$(head -1 "$f" | sed 's/^# //')")"
+  {
+    html_header "$title" "../"
+    md_to_html "$f"
+    html_footer
+  } > "$OUTPUT_DIR/task-tickets/${base}.html"
+  echo "  $f → $OUTPUT_DIR/task-tickets/${base}.html"
+done
+
+# インデックスページ
+{
+  html_header "711 Activating Conversion"
+  cat <<EOF
+<h1>711 Activating Conversion</h1>
+<h2>ドキュメント一覧</h2>
+<ul>
+  <li><a href="1_PITCH.html">PITCH</a></li>
+  <li><a href="2_PLAN.html">PLAN</a></li>
+  <li><a href="3_TODO.html">TODO</a></li>
+  <li><a href="4_CHECKPOINT.html">CHECKPOINT</a></li>
+</ul>
+<h2>タスクチケット</h2>
+<ul>
+EOF
+  for f in "$TICKETS_DIR"/T*.md; do
+    [ -f "$f" ] || continue
+    base="$(basename "$f" .md)"
+    title="$(escape_html_attr "$(head -1 "$f" | sed 's/^# //')")"
+    echo "  <li><a href=\"task-tickets/${base}.html\">${title}</a></li>"
+  done
+  echo "</ul>"
+  html_footer
+} > "$OUTPUT_DIR/index.html"
+echo "  index.html"
+
+echo "=== 完了: $OUTPUT_DIR ==="
